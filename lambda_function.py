@@ -7,21 +7,22 @@ http://amzn.to/1LGWsLG
 """
 
 from __future__ import print_function
-from datetime import datetime, timedelta
+import time
 
 
 # --------------- Helpers that build all of the responses ----------------------python
 
 def build_speechlet_response(title, output, reprompt_text, should_end_session):
-    return {
+    if title != None:
+        return {
         'outputSpeech': {
             'type': 'PlainText',
             'text': output
         },
         'card': {
-            'type': 'Simple',
-            'title': "SessionSpeechlet - " + title,
-            'content': "SessionSpeechlet - " + output
+            'type': 'Standard',
+            'title': "Focus Timer",
+            'content': output
         },
         'reprompt': {
             'outputSpeech': {
@@ -31,6 +32,21 @@ def build_speechlet_response(title, output, reprompt_text, should_end_session):
         },
         'shouldEndSession': should_end_session
     }
+    
+    else:
+        return {
+            'outputSpeech': {
+                'type': 'PlainText',
+                'text': output
+            },
+            'reprompt': {
+                'outputSpeech': {
+                    'type': 'PlainText',
+                    'text': reprompt_text
+                }
+            },
+            'shouldEndSession': should_end_session
+        }
 
 
 def build_response(session_attributes, speechlet_response):
@@ -49,7 +65,6 @@ def get_welcome_response():
     """
 
     session_attributes = {}
-    card_title = "Welcome"
     speech_output = "Okay." \
                     " Please tell me how long you would like to focus."
     # If the user either does not reply to the welcome message or says something
@@ -58,7 +73,7 @@ def get_welcome_response():
                     " You can say, help me focus for thirty minutes."
     should_end_session = False
     return build_response(session_attributes, build_speechlet_response(
-        card_title, speech_output, reprompt_text, should_end_session))
+        None, speech_output, reprompt_text, should_end_session))
 
 
 def handle_session_end_request():
@@ -68,74 +83,43 @@ def handle_session_end_request():
     # Setting this to true ends the session and exits the skill.
     should_end_session = True
     return build_response({}, build_speechlet_response(
-        card_title, speech_output, None, should_end_session))
+        None, speech_output, None, should_end_session))
 
-
-def create_favorite_color_attributes(favorite_color):
-    return {"favoriteColor": favorite_color}
 
 def create_duration_timer_attributes(duration_timer):
     return {"durationTimer": duration_timer}
     
-"""
-def set_color_in_session(intent, session):
-    Sets the color in the session and prepares the speech to reply to the
-    user.
-    
 
-    card_title = intent['name']
-    session_attributes = {}
-    should_end_session = False
 
-    if 'Color' in intent['slots']:
-        favorite_color = intent['slots']['Color']['value']
-        session_attributes = create_favorite_color_attributes(favorite_color)
-        speech_output = "I now know your favorite color is " + \
-                        favorite_color + \
-                        ". You can ask me your favorite color by saying, " \
-                        "what's my favorite color?"
-        reprompt_text = "You can ask me your favorite color by saying, " \
-                        "what's my favorite color?"
-    else:
-        speech_output = "I'm not sure what your favorite color is. " \
-                        "Please try again."
-        reprompt_text = "I'm not sure what your favorite color is. " \
-                        "You can tell me your favorite color by saying, " \
-                        "my favorite color is red."
-    return build_response(session_attributes, build_speechlet_response(
-        card_title, speech_output, reprompt_text, should_end_session))
-"""
 
-"""
-def get_color_from_session(intent, session):
-    session_attributes = {}
-    reprompt_text = None
-
-    if session.get('attributes', {}) and "favoriteColor" in session.get('attributes', {}):
-        favorite_color = session['attributes']['favoriteColor']
-        speech_output = "Your favorite color is " + favorite_color + \
-                        ". Goodbye."
-        should_end_session = True
-    else:
-        speech_output = "I'm not sure what your favorite color is. " \
-                        "You can say, my favorite color is red."
-        should_end_session = False
-
-    # Setting reprompt_text to None signifies that we do not want to reprompt
-    # the user. If the user does not respond or says something that is not
-    # understood, the session will end.
-    return build_response(session_attributes, build_speechlet_response(
-        intent['name'], speech_output, reprompt_text, should_end_session))
-"""
 
 def timer_session(intent, session):
-    #convert the timer and initiate timer loop
     if 'duration' in intent['slots']:
         #Creating the duration_timer in ISO 6801 format
         duration_timer = intent['slots']['duration']['value']
         session_attributes = create_duration_timer_attributes(duration_timer)
+    
+        speech_output = "You have set your focus timer for " + duration_timer + \
+        ". Say start focus timer to begin."
+        
+    should_end_session = False    
+    return build_response(session_attributes, build_speechlet_response(
+        "Set Timer", speech_output, None, should_end_session))
+     
+     
+     
+        
+def begin_timer(intent, session):
+    
+    session_attributes = {}
+    reprompt_text = None
+    should_end_session = False
+
+    if session.get('attributes', {}) and "durationTimer" in session.get('attributes', {}):
+        duration_timer = session['attributes']['durationTimer']
         
     t = str(duration_timer)
+    #t = "PT30S"
     index = -1
     # hold values for time amount
     total = 0
@@ -151,22 +135,19 @@ def timer_session(intent, session):
             if index != -1:
                 total += int(t[index:i]) * time_dict[t[i]]
                 index = -1
-                
-        
-    now = datetime.now()
-    return now
-    future = now + timedelta(0, total)
-    stuff = 0
-    while True:
-        if datetime.now() > future:
-            break
     
-    speech_output = "Congraulations! Good job at staying focused."
+    now = 0
+    future = now + total
+    while now < future:
+        now = now + 1
+        time.sleep(1)
+    
+    speech_output = "Time's up! Good job at staying focused."
     session_attributes = {}
     should_end_session = True
 
     return build_response(session_attributes, build_speechlet_response(
-        intent['name'], speech_output, None, should_end_session))
+        None, speech_output, None, should_end_session))
 
 # --------------- Events ------------------
 
@@ -204,6 +185,8 @@ def on_intent(intent_request, session):
         return get_color_from_session(intent, session)
     elif intent_name == "FocusDurationIntent":
         return timer_session(intent, session)
+    elif intent_name == "BeginTimerIntent":
+        return begin_timer(intent, session)
     elif intent_name == "AMAZON.HelpIntent":
         return get_welcome_response()
     elif intent_name == "AMAZON.CancelIntent" or intent_name == "AMAZON.StopIntent":
