@@ -8,7 +8,7 @@ http://amzn.to/1LGWsLG
 
 from __future__ import print_function
 import time
-
+import urllib
 
 # --------------- Helpers that build all of the responses ----------------------python
 
@@ -99,8 +99,18 @@ def timer_session(intent, session):
         duration_timer = intent['slots']['duration']['value']
         session_attributes = create_duration_timer_attributes(duration_timer)
     
-        speech_output = "You have set your focus timer for " + duration_timer + \
-        ". Say start focus timer to begin."
+        t = str(duration_timer)
+        prompt = ""
+        if "H" in t: prompt += t[t.find("T")+1:t.find("H")] + " hours"
+        if prompt and "M" in t: prompt +=  " and " + t[t.find("H")+1:t.find("M")] + " minutes"
+        elif "M" in t: prompt += t[t.find("T")+1:t.find("M")] + " minutes"
+        if "M" in t and "S" in t: prompt += " and " + t[t.find("M")+1:t.find("S")] + " seconds"
+        elif "H" in t and "S" in t: prompt += " and " + t[t.find("H")+1:t.find("S")] + " seconds"
+        elif "S" in t: prompt += t[t.find("T")+1:t.find("S")] + " seconds"
+    
+    
+        speech_output = "Great! I have set your focus timer for " + prompt + ". \
+        Say start focus timer to begin."
         
     should_end_session = False    
     return build_response(session_attributes, build_speechlet_response(
@@ -119,7 +129,11 @@ def begin_timer(intent, session):
         duration_timer = session['attributes']['durationTimer']
         
     t = str(duration_timer)
-    #t = "PT30S"
+    #t = "PT16S"
+    light = False
+    TV = False
+    refridger = False
+    speech_output = ""
     index = -1
     # hold values for time amount
     total = 0
@@ -140,9 +154,29 @@ def begin_timer(intent, session):
     future = now + total
     while now < future:
         now = now + 1
+        if now == 11:
+            light = True
+        
+        if now == 20:
+            TV = True
+            
+        if now == 1:
+            refridger = True
+            
+            
+        if light == True:
+            light = False
+            speech_output = speech_output + "At " + str(now) + " seconds, I turned your light off. "
+        if TV == True:
+            TV = False
+            speech_output = speech_output + "At " + str(now) + " seconds, I turned your TV off. "
+            
+        if refridger == True:
+            refridger = False
+            speech_output = speech_output + "At " + str(now) + " seconds, I locked the door to your refridgerator. "
         time.sleep(1)
     
-    speech_output = "Time's up! Good job at staying focused."
+    speech_output =  "Time's up! Good job at staying focused. \n For the record: " + speech_output
     session_attributes = {}
     should_end_session = True
 
