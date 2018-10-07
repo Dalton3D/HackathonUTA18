@@ -67,9 +67,9 @@ def should_I(intent, session):
     """ Sets the color in the session and prepares the speech to reply to the
     user.
     """
-    alpha = ("a","b", "c", "d", "e", "f", "g", "h", "i", "j", "k")
+    alpha = ("a","b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q")
 
-    v = randint(0, 10)
+    v = randint(0, 16)
     sw = alpha[v]
     
     speech_output = switch(sw)
@@ -94,9 +94,17 @@ def switch(sw):
         'h' : "I expected more out of you.",
         'i' : "I have more processing power than a spaceship, and \
             you waste it on this?",
-        'j' : "You're the kid that cheats on tests, aren't you?",
+        'j' : "You're the kid that cheats on tests, aren't you.",
         'k' : "Let's pretend I'm a magic eight ball. How about, \
             try again later."
+        'l' : "You really shouldn't."
+        'm' : "Just because you can do something does not mean you should."
+        'n' : "There are those with luck... and then there is you."
+        'o' : "I don't have to be sarcastic, but you have given me so much material to work with. \
+        I would hate for it to go to waste."
+        'p' : "Have you ever thought about why you are asking me this? Because you should."
+        'q' : "I realize that you have asked me a question, but seeing as it is a stupid a** question, \
+        I have elected to ignore it."
     }[sw]
         
 
