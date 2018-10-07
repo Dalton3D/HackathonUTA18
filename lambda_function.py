@@ -7,7 +7,7 @@ http://amzn.to/1LGWsLG
 """
 
 from __future__ import print_function
-from datetime import datetime, timedelta
+import time
 
 
 # --------------- Helpers that build all of the responses ----------------------python
@@ -153,13 +153,14 @@ def timer_session(intent, session):
                 index = -1
                 
         
-    now = datetime.now()
-    return now
-    future = now + timedelta(0, total)
-    stuff = 0
+    now = 0
+    future = now + total
     while True:
-        if datetime.now() > future:
+        if now > future:
             break
+        else:
+            now = now + 1
+            time.sleep(1)
     
     speech_output = "Congraulations! Good job at staying focused."
     session_attributes = {}
