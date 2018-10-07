@@ -2,12 +2,12 @@
 This sample demonstrates a simple skill built with the Amazon Alexa Skills Kit.
 The Intent Schema, Custom Slots, and Sample Utterances for this skill, as well
 as testing instructions are located at http://amzn.to/1LzFrj6
-
 For additional samples, visit the Alexa Skills Kit Getting Started guide at
 http://amzn.to/1LGWsLG
 """
 
 from __future__ import print_function
+from datetime import datetime, timedelta
 
 
 # --------------- Helpers that build all of the responses ----------------------python
@@ -63,7 +63,7 @@ def get_welcome_response():
 
 def handle_session_end_request():
     card_title = "Session Ended"
-    speech_output = "Congraulations! I hoped I have helped you focus better today. " \
+    speech_output = "Thank you for trying the Alexa Skills Kit sample. " \
                     "Have a nice day! "
     # Setting this to true ends the session and exits the skill.
     should_end_session = True
@@ -74,11 +74,14 @@ def handle_session_end_request():
 def create_favorite_color_attributes(favorite_color):
     return {"favoriteColor": favorite_color}
 
-
+def create_duration_timer_attributes(duration_timer):
+    return {"durationTimer": duration_timer}
+    
+"""
 def set_color_in_session(intent, session):
-    """ Sets the color in the session and prepares the speech to reply to the
+    Sets the color in the session and prepares the speech to reply to the
     user.
-    """
+    
 
     card_title = intent['name']
     session_attributes = {}
@@ -101,8 +104,9 @@ def set_color_in_session(intent, session):
                         "my favorite color is red."
     return build_response(session_attributes, build_speechlet_response(
         card_title, speech_output, reprompt_text, should_end_session))
+"""
 
-
+"""
 def get_color_from_session(intent, session):
     session_attributes = {}
     reprompt_text = None
@@ -122,25 +126,47 @@ def get_color_from_session(intent, session):
     # understood, the session will end.
     return build_response(session_attributes, build_speechlet_response(
         intent['name'], speech_output, reprompt_text, should_end_session))
-
-def help_session():
-    card_title = "Help Session"
-    speech_output = "This skill is designed to help you focus by turning off all the distractions I can." \
-    "You may try to turn them off, but I will turn them off! Once you decide to stay focused, I will continue to" \
-    "to help to focus until the duration timer we set is finished. Be careful: you cannot cancel me once once you set" \
-    "the timer, so make sure you are ready to commit to staying focused."
-    
-    should_end_session = False
-    return build_response({}, build_speechlet_response(
-        card_title, speech_output, None, should_end_session))
+"""
 
 def timer_session(intent, session):
-    speech_output = "You have started the timer. Ready, go!"
-    card_title = "Session Ended"
+    #convert the timer and initiate timer loop
+    if 'duration' in intent['slots']:
+        #Creating the duration_timer in ISO 6801 format
+        duration_timer = intent['slots']['duration']['value']
+        session_attributes = create_duration_timer_attributes(duration_timer)
+        
+    t = str(duration_timer)
+    index = -1
+    # hold values for time amount
+    total = 0
+    # get start and end of int
+    time_dict = {"H" : 3600, "M" : 60, "S" : 1}
+    for i in range(len(t)):
+        try:
+            int(t[i])
+            if index == -1:
+                index = i
+                continue    
+        except:
+            if index != -1:
+                total += int(t[index:i]) * time_dict[t[i]]
+                index = -1
+                
+        
+    now = datetime.now()
+    return now
+    future = now + timedelta(0, total)
+    stuff = 0
+    while True:
+        if datetime.now() > future:
+            break
     
+    speech_output = "Congraulations! Good job at staying focused."
+    session_attributes = {}
     should_end_session = True
-    return build_response({}, build_speechlet_response(
-        card_title, speech_output, None, should_end_session))
+
+    return build_response(session_attributes, build_speechlet_response(
+        intent['name'], speech_output, None, should_end_session))
 
 # --------------- Events ------------------
 
@@ -179,7 +205,7 @@ def on_intent(intent_request, session):
     elif intent_name == "FocusDurationIntent":
         return timer_session(intent, session)
     elif intent_name == "AMAZON.HelpIntent":
-        return help_session()
+        return get_welcome_response()
     elif intent_name == "AMAZON.CancelIntent" or intent_name == "AMAZON.StopIntent":
         return handle_session_end_request()
     else:
@@ -188,7 +214,6 @@ def on_intent(intent_request, session):
 
 def on_session_ended(session_ended_request, session):
     """ Called when the user ends the session.
-
     Is not called when the skill returns should_end_session=true
     """
     print("on_session_ended requestId=" + session_ended_request['requestId'] +

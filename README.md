@@ -1,5 +1,5 @@
 
-![picture alt](Stay-Focused1.jpg)
+![picture alt](Stay-Focused-1.jpg)
 
 # Stay Focused with Alexa
 
